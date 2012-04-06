@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<multistatus xmlns='DAV:'>
+  <response>
+    <href>/calendars/users/user01/</href>
+    <propstat>
+      <prop>
+        <displayname>user01</displayname>
+        <resourcetype>
+          <collection/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/calendars/users/user01/calendar/</href>
+    <propstat>
+      <prop>
+        <displayname>calendar</displayname>
+        <resourcetype>
+          <collection/>
+          <calendar xmlns='urn:ietf:params:xml:ns:caldav'/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/calendars/users/user01/dropbox/</href>
+    <propstat>
+      <prop>
+        <resourcetype>
+          <collection/>
+          <dropbox-home xmlns='http://calendarserver.org/ns/'/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/calendars/users/user01/notifications/</href>
+    <propstat>
+      <prop>
+        <resourcetype>
+          <collection/>
+          <notifications xmlns='http://calendarserver.org/ns/'/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/calendars/users/user01/inbox/</href>
+    <propstat>
+      <prop>
+        <displayname>inbox</displayname>
+        <resourcetype>
+          <collection/>
+          <schedule-inbox xmlns='urn:ietf:params:xml:ns:caldav'/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/calendars/users/user01/outbox/</href>
+    <propstat>
+      <prop>
+        <resourcetype>
+          <collection/>
+          <schedule-outbox xmlns='urn:ietf:params:xml:ns:caldav'/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+</multistatus>

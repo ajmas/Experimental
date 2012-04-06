@@ -1,0 +1,49 @@
+Goal
+----------
+
+The goal of this project is to identify the selected locales the
+user has configured in the system preferences and to try to launch
+Firefox with the most appropriate locale, downloading the language
+pack if necessary.
+
+References
+-----------
+
+http://developer.apple.com/documentation/MacOSX/Conceptual/BPInternational/Articles/ChoosingLocalizations.html
+
+NSUserDefaults* defs = [NSUserDefaults standardUserDefaults];
+NSArray* languages = [defs objectForKey:@"AppleLanguages"];
+NSString* preferredLang = [languages objectAtIndex:0];
+
+firefox -UILocale
+
+Pseudo Code
+-----------
+
+String defaultLocale = "en";
+String firefoxVersion;
+List userLanguages = getListFromSystem();
+List installedLanguagePacks = getInstalledlanguagePacks();
+List installableLanguagePacks;
+
+String uiLocale = userLanguages[0];
+if ( !isInstalled( uiLocale, installedLanguagePacks) ) {
+  installableLanguagePacks = listInstallableLanguagePacks( firefoxVersion );
+ 
+  boolean localeMatched = false;
+  for ( String locale : userLanguages ) {
+    if ( isInstallableLanguagePack ( locale ) {
+      installLanguagePack ( locale );
+      uiLocale = locale;    
+    }
+  }   
+  
+  if ( !localeMatched ) {
+     installLanguagePack ( defaultLocale );
+     uiLocale = defaultLocale;
+  }
+}
+
+launchFirefox ( uiLocale );
+
+

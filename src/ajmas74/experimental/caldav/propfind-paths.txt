@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<multistatus xmlns='DAV:'>
+  <response>
+    <href>/principals/users/user01/</href>
+    <propstat>
+      <prop>
+        <calendar-home-set xmlns='urn:ietf:params:xml:ns:caldav'>
+          <href xmlns='DAV:'>/calendars/users/user01</href>
+        </calendar-home-set>
+        <calendar-user-address-set xmlns='urn:ietf:params:xml:ns:caldav'>          
+          <href xmlns='DAV:'>/principles/__uids__/user01/</href>
+          <href xmlns='DAV:'>/principles/users/user01/</href>
+          <href xmlns='DAV:'>mailto:user01@example.com</href>
+          <href xmlns='DAV:'>http://localhost:8686/dav/users/user01/</href>
+          <href xmlns='DAV:'>urn:uuid:user01</href>
+        </calendar-user-address-set>
+        <schedule-inbox-URL xmlns='urn:ietf:params:xml:ns:caldav'>
+          <href xmlns='DAV:'>/calendars/users/user01/inbox/</href>
+        </schedule-inbox-URL>
+        <schedule-outbox-URL xmlns='urn:ietf:params:xml:ns:caldav'>
+          <href xmlns='DAV:'>/calendars/users/user01/outbox/</href>
+        </schedule-outbox-URL>
+        <dropbox-home-URL xmlns='http://calendarserver.org/ns/'>
+          <href xmlns='DAV:'>/calendars/users/user01/dropbox/</href>
+        </dropbox-home-URL>
+        <notifications-URL xmlns='http://calendarserver.org/ns/'>
+          <href xmlns='DAV:'>/calendars/users/user01/notifications/</href>
+        </notifications-URL>
+        <displayname>User 01</displayname>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>

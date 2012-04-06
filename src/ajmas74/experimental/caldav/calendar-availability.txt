@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<multistatus xmlns='DAV:'>
+  <response>
+    <href>/calendars/users/user01/inbox/</href>
+    <propstat>
+      <prop>
+        <calendar-availability xmlns='http://calendarserver.org/ns/'>BEGIN:VCALENDAR<![CDATA[
+]]>X-WR-TIMEZONE:Canada/Eastern<![CDATA[
+]]>PRODID:-//Apple Inc.//iCal 3.0//EN<![CDATA[
+]]>CALSCALE:GREGORIAN<![CDATA[
+]]>VERSION:2.0<![CDATA[
+]]>X-WR-RELCALID:D41F99E5-9814-413B-8896-1FB7D90D342A<![CDATA[
+]]>METHOD:PUBLISH<![CDATA[
+]]>BEGIN:VAVAILABILITY<![CDATA[
+]]>CREATED:20071105T000836Z<![CDATA[
+]]>UID:2BAD2A62-580F-4696-936F-D55BCAF9EBF6<![CDATA[
+]]>DTSTAMP:20071105T000836Z<![CDATA[
+]]>BEGIN:AVAILABLE<![CDATA[
+]]>DTSTART;TZID=Canada/Eastern:20071005T080000<![CDATA[
+]]>CREATED:20071105T000836Z<![CDATA[
+]]>DTEND;TZID=Canada/Eastern:20071005T180000<![CDATA[
+]]>RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR<![CDATA[
+]]>UID:9A2D44F7-699D-416E-81F7-856F93D7B262<![CDATA[
+]]>DTSTAMP:20071105T000836Z<![CDATA[
+]]>END:AVAILABLE<![CDATA[
+]]>END:VAVAILABILITY<![CDATA[
+]]>END:VCALENDAR<![CDATA[
+]]></calendar-availability>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+</multistatus>

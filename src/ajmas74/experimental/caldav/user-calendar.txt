@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<multistatus xmlns='DAV:'>
+  <response>
+    <href>/calendars/users/user01/calendar/</href>
+    <propstat>
+      <prop>
+        <displayname>calendar</displayname>
+        <getctag xmlns='http://calendarserver.org/ns/'>2007-11-04 19:10:04.661345</getctag>
+        <resourcetype>
+          <collection/>
+          <calendar xmlns='urn:ietf:params:xml:ns:caldav'/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <calendar-color xmlns='http://apple.com/ns/ical/'/>
+        <calendar-description xmlns='urn:ietf:params:xml:ns:caldav'/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+</multistatus>
