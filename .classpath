@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src-3rdparty"/>
+	<classpathentry kind="src" path="config"/>
+	<classpathentry kind="lib" path="lib/jmdns.jar"/>
+	<classpathentry kind="lib" path="lib/jrendezvous.jar"/>
+	<classpathentry kind="lib" path="lib/xerces.jar"/>
+	<classpathentry kind="lib" path="lib/vecmath.jar"/>
+	<classpathentry kind="lib" path="lib/j3dutils.jar"/>
+	<classpathentry kind="lib" path="lib/j3dcore.jar"/>
+	<classpathentry kind="lib" path="lib/j2ee13.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.12-bin.jar"/>
+	<classpathentry kind="lib" path="lib/acme.jar"/>
+	<classpathentry kind="lib" path="lib/jdom.jar"/>
+	<classpathentry kind="lib" path="lib/jts-1.8.jar"/>
+	<classpathentry kind="lib" path="lib/jtsio-1.8.jar"/>
+	<classpathentry kind="lib" path="lib/gt-jdbc-mysql-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/gt-main-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/gt-jdbc-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/gt-data-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/gt-api-2.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/geoapi-2.3-M1.jar"/>
+	<classpathentry kind="lib" path="lib/geoapi-pending-2.3-M1.jar"/>
+	<classpathentry kind="lib" path="lib/jl1.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/tritonus_share.jar"/>
+	<classpathentry kind="lib" path="lib/mp3spi1.9.5.jar"/>
+	<classpathentry kind="lib" path="lib/stendahls-commons.jar"/>
+	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?ivyXmlPath=ivy.xml&amp;confs=*"/>
+	<classpathentry kind="lib" path="lib/javampd-4.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>
