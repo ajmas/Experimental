@@ -16,6 +16,12 @@ import javax.imageio.ImageIO;
  * Code to read DX data, based on file format specified at
  * http://isccp.giss.nasa.gov/pub/documents/d-doc.pdf
  * 
+ * Used for data available here:
+ * ftp://eclipse.ncdc.noaa.gov/pub/isccp/dx/
+ * 
+ * Code based on documention, working with a friend and code found
+ * here: http://isccp.giss.nasa.gov/products/software.html
+ * 
  * @author ajmas
  *
  */
@@ -45,7 +51,6 @@ public class DXRead {
 	static abstract class Section {
 
 		Section() {
-			// System.out.println(getClass());
 		}
 
 		// http://stackoverflow.com/questions/10514077/how-to-validate-value-of-bit-in-byte-array-in-java
@@ -55,6 +60,10 @@ public class DXRead {
 			int bitMask = 1 << bitIndex;
 			return (data[byteIndex] & bitMask) > 0;
 		}
+		
+		int getUnsignedByte(ByteBuffer byteBuffer, int offset) {
+			return byteBuffer.get(offset) & 0xff;
+		}		
 	}
 
 	static class DxS1 extends Section {
@@ -86,15 +95,11 @@ public class DXRead {
 		}
 		
 		public int getIRRadiance() {
-			return getUnsignedByte(3);
+			return getUnsignedByte(byteBuffer, 3);
 		}
 		
-		public int getFirstIRClearSkyRadiance() {
-			return getUnsignedByte(4);
-		}
-		
-		int getUnsignedByte(int offset) {
-			return byteBuffer.get(offset) & 0xff;
+		public int getFirstIRRadiance() {
+			return getUnsignedByte(byteBuffer, 4);
 		}
 		
 		// unsigned noday : 1;
@@ -130,15 +135,23 @@ public class DXRead {
 	static class DxS2 extends Section {
 		static final int DATA_LEN = 5;
 		byte[] data = new byte[DATA_LEN];
-
+		ByteBuffer byteBuffer;
+		
 		public DxS2(byte[] data) {
 			this.data = data;
 		}
 
 		public DxS2(byte[] data, int start) {
 			super();
-			System.arraycopy(data, 0, this.data, 0, DATA_LEN);
+			System.arraycopy(data, start, this.data, 0, DATA_LEN);
+			byteBuffer = ByteBuffer.allocate(DATA_LEN);
+			byteBuffer.put(this.data);
 		}
+		
+		public int getVISRadiance() {
+			return getUnsignedByte(byteBuffer, 3);
+		}
+		
 		// unsigned glint : 1;
 		// unsigned vcslog : 4;
 		// unsigned bxvthr : 3;
@@ -244,10 +257,226 @@ public class DXRead {
 		}
 	};
 
-	// static int bytes4ToInt(byte[] data, int offset) {
-	// return new BigInteger(data,).intValue();
-	// }
+	static class Header {
+		int year = -1;
+		int month = -1;
+		int day = -1;
+		int utc = -1;
+		
+		int satelliteId = -1;
+		int channelCount = -1;
+		boolean nightImage = false;
+		
+		boolean polarSatellite = false;
+		
+		public String toString() {
+			return year + "-" + month + "-" + day + ", " + 
+			satelliteId + ", " + 
+			channelCount + ", " + nightImage + ", " + polarSatellite;			
+		}
+	}
+		
+	
+	public Header readHeader(byte[] buffer) {
 
+		Header header = new Header();
+		
+		String line = new String(buffer, 0, 80, Charset.forName("ascii"));
+		//System.out.print(line);
+		int j = 0;
+		header.year = Integer.parseInt(line.substring(j, j + 10).trim());
+		j += 10;
+		header.month = Integer.parseInt(line.substring(j, j + 10).trim());
+		j += 10;
+		header.day = Integer.parseInt(line.substring(j, j + 10).trim());
+		j += 10;
+		header.utc = Integer.parseInt(line.substring(j, j + 10).trim());
+		j += 10;
+		header.satelliteId = Integer.parseInt(line.substring(j, j + 10)
+				.trim());
+		j += 10;
+		header.polarSatellite = (Integer.parseInt(line
+				.substring(j, j + 10).trim()) > 0);
+		j += 10;
+		header.channelCount = Integer.parseInt(line.substring(j, j + 10)
+				.trim());
+		
+		System.out.println("polar: " + header.polarSatellite);
+		
+		for (int i = 2; i < 384; i++) {
+			int offset = (i - 1) * 80;
+			line = new String(buffer, offset, 80,
+					Charset.forName("ascii"));
+			
+			if (line.trim().length() > 0) {
+				System.out.println(line);
+			}
+		}
+
+		return header;
+	}
+	
+	@SuppressWarnings("unused")
+	public void readRecord(Header header, byte[] buffer, BufferedImage image) throws IOException {
+				
+		DataInputStream bIn = new DataInputStream(
+				new ByteArrayInputStream(buffer,0,RECLEN));
+		
+		// Prefix area
+						
+		int iwest = bIn.readInt();
+		int ieast = bIn.readInt();
+		int inorth = bIn.readInt();
+		int isouth = bIn.readInt();		
+		int npix = bIn.readInt();
+		int iout = bIn.readInt();
+		
+		int[] longitudes = new int[npix];
+		int[] latitudes = new int[npix];
+		int[] xPositions = new int[npix];
+		int[] yPositions = new int[npix];
+
+		DxDataRec[] dataRec = new DxDataRec[npix];
+		for (int i=0; i<npix; i++ ) {
+			longitudes[i] = bIn.readShort();
+			latitudes[i] = bIn.readShort();
+			xPositions[i] = bIn.readShort();
+			yPositions[i] = bIn.readShort();
+
+			dataRec[i] = new DxDataRec(longitudes[i], latitudes[i], xPositions[i], yPositions[i]);
+		}
+
+		// Data area
+		
+		for (int i = 0; i < npix; i++) {									
+			DxS1 dxs1 = null;
+
+			bIn.read(buffer, 0, DxS1.DATA_LEN);
+			dxs1 = new DxS1(buffer, 0);
+		
+			int radiance = dxs1.getIRRadiance();
+
+			
+//			if (radiance > 0 && radiance < 200) {
+//				radiance *= 2;
+//				radiance = 254;
+//			}
+//			else if (radiance > 100 && radiance < 200) {
+//				radiance *= 1.8;
+//			}
+			if (image != null) {
+				int height = image.getHeight();
+				int r = radiance;
+	            int g = radiance;
+	            int b = radiance;
+	            int col = (r << 16) | (g << 8) | b;
+	            
+	            if (col != 0) {
+	            	image.setRGB(dataRec[i].xBuf, height - dataRec[i].yBuf, col);
+	            }
+			}
+			
+			// ADD1
+			bIn.read(buffer, 0, header.channelCount - 2);
+			new DxAdd1(buffer, 0, header.channelCount - 2);
+
+			if (!header.polarSatellite) {
+				if (!dxs1.isNoDay()) {
+					// S3
+					bIn.read(buffer, 0, DxS3.DATA_LEN);
+					new DxS3(buffer, 0);
+				} else {
+					// S2
+					bIn.read(buffer, 0, DxS2.DATA_LEN);
+					DxS2 dxs2 = new DxS2(buffer, 0);					
+					// S3
+					bIn.read(buffer, 0, DxS4.DATA_LEN);
+					new DxS3(buffer, 0);
+					// S4
+					bIn.read(buffer, 0, DxS4.DATA_LEN);
+					new DxS4(buffer, 0);
+				}
+			} else {
+				if (!dxs1.isNoDay()) {
+					// S3
+					bIn.read(buffer, 0, DxS3.DATA_LEN);
+					new DxS3(buffer, 0);
+					// Add3
+					bIn.read(buffer, 0, DxAdd3.DATA_LEN);
+					new DxAdd3(buffer, 0);
+				} else {
+					// S2
+					bIn.read(buffer, 0, DxS2.DATA_LEN);
+					DxS2 dxs2 = new DxS2(buffer, 0);					
+					// S3
+					bIn.read(buffer, 0, DxS3.DATA_LEN);
+					new DxS3(buffer, 0);
+					// Add3
+					bIn.read(buffer, 0, DxAdd3.DATA_LEN);
+					new DxAdd3(buffer, 0);
+					// S4
+					bIn.read(buffer, 0, DxS4.DATA_LEN);
+					new DxS4(buffer, 0);
+				}
+			}
+		}
+	}
+	
+	public void readFile(File inputFile, File outputFile, boolean mergeImage) throws IOException {
+
+		byte[] buffer = new byte[RECLEN];
+		BufferedImage image = null;
+		FileInputStream fIn = null;
+		DataInputStream in = null;
+		
+		if (!inputFile.exists()) {
+			System.out.println("File does not exist: " + inputFile);
+			return;
+		}
+		try {
+			
+			fIn = new FileInputStream(inputFile);			
+			in = new DataInputStream(fIn);
+			
+			int recordCount = (int) (inputFile.length() / RECLEN);
+			
+			if (outputFile != null) {
+				int width = 1440;
+				int height = 550;
+				
+				if (outputFile.exists() && mergeImage) {
+					image = ImageIO.read(outputFile);
+				} else {
+					image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+				}
+			}
+			
+			in.read(buffer,0,RECLEN);
+			Header header = readHeader(buffer);
+			
+			System.out.println(header);
+			
+			for (int recIdx=1; recIdx < recordCount; recIdx++) {
+				in.read(buffer, 0, RECLEN);
+				readRecord(header, buffer, image);
+			}
+			
+			if (image != null) {
+				ImageIO.write(image, "PNG", outputFile);
+			}
+		} finally {
+			if (in != null) {
+				in.close();
+			}
+		}
+	}
+	
+	public void read(String[] args) throws IOException {
+		File inputFile = new File(args[0]);
+		File outputFile = new File("output.png"); 
+		new DXRead().readFile(inputFile, outputFile, true);
+	}
+	
 	public static void main(String[] args) throws IOException {
 		args = new String[1];
 		for (int i=0; i<=21; i+=3) {
@@ -255,313 +484,15 @@ public class DXRead {
 			if (val.length() < 2) {
 				val = "0" + val;
 			}
-			args[0] = "/Users/ajmas/Development/projects/NOM parser/data/ISCCP.DX.0.NOA-10A.1991.01.03." + val + "00.NOM";
-			read(args);
+			args[0] = "data/2004/MET-7/ISCCP.DX.0.NOA-17S.2004.01.01." + val + "00.NOM";
+			args[0] = "data/2004/MET-7/ISCCP.DX.0.MET-7.2004.01.01." + val + "00.EUM";
+
+			new DXRead().read(args);
 		}
-	}
-	
-	
-	public static void readHeader(byte[] buffer) {
-		int year = -1;
-		int month = -1;
-		int day = -1;
-		int utc = -1;
 		
-		int satelliteId = -1;
-		int satelliteType = -1;
-		int channelCount = -1;
-		boolean nightImage = false;
-		
-		boolean polarSatellite = false;
-		
-//		len = in.read(buffer, 0, RECLEN);
-
-		String line = new String(buffer, 0, 80, Charset.forName("ascii"));
-		int j = 0;
-		year = Integer.parseInt(line.substring(j, j + 10).trim());
-		//System.out.println(year);
-		j += 10;
-		month = Integer.parseInt(line.substring(j, j + 10).trim());
-		//System.out.println(month);
-		j += 10;
-		day = Integer.parseInt(line.substring(j, j + 10).trim());
-		//System.out.println(day);
-		j += 10;
-		utc = Integer.parseInt(line.substring(j, j + 10).trim());
-		//System.out.println(utc);
-		j += 10;
-		satelliteId = Integer.parseInt(line.substring(j, j + 10)
-				.trim());
-		//System.out.println(satelliteId);
-		j += 10;
-		polarSatellite = (Integer.parseInt(line
-				.substring(j, j + 10).trim()) > 0);
-		//System.out.println(polarSatellite);
-		j += 10;
-		channelCount = Integer.parseInt(line.substring(j, j + 10)
-				.trim());
-		//System.out.println(channelCount);
-		j += 10;
-		channelCount = Integer.parseInt(line.substring(j, j + 10)
-				.trim());
-		//System.out.println(channelCount);
-		
-		for (int i = 2; i < 384; i++) {
-			int offset = (i - 1) * 80;
-			line = new String(buffer, offset, 80,
-					Charset.forName("ascii"));
-			
-			System.out.println(line);
-		}
+//		args[0] = "data/ISCCP.DX.0.NOA-10A.1991.01.01.0000.NOM";
+//		new DXRead().read(args);
 
 	}
 	
-	public static void readRecord(DataInputStream in) {
-		
-	}
-	
-	public static void readFile(DataInputStream in) {
-		
-	}
-	
-	public static void read(String[] args) throws IOException {
-		int headerLength = RECLEN;
-		
-		String outputImageFile = "MyFile.png";
-		
-		File f = new File("MyFile.png");
-
-		boolean polarSatellite = false;
-
-		int year = -1;
-		int month = -1;
-		int day = -1;
-		int utc = -1;
-
-		int satelliteId = -1;
-		int satelliteType = -1;
-		int channelCount = -1;
-		boolean nightImage = false;
-
-		FileInputStream fIn = null;
-		DataInputStream in = null;
-		byte[] buffer = new byte[headerLength];
-		int len = -1;
-		try {
-
-			File file = new File(args[0]);//"/Users/ajmas/Development/projects/NOM parser/data/ISCCP.DX.0.NOA-10A.1991.01.02.0000.NOM");
-			if (!file.exists()) {
-				System.out.println("no such file: " + file);
-				return;
-			}
-			fIn = new FileInputStream(file);
-			
-			in = new DataInputStream(fIn);
-
-			// Read the header
-
-			len = in.read(buffer, 0, headerLength);
-
-			String line = new String(buffer, 0, 80, Charset.forName("ascii"));
-			int j = 0;
-			year = Integer.parseInt(line.substring(j, j + 10).trim());
-			//System.out.println(year);
-			j += 10;
-			month = Integer.parseInt(line.substring(j, j + 10).trim());
-			//System.out.println(month);
-			j += 10;
-			day = Integer.parseInt(line.substring(j, j + 10).trim());
-			//System.out.println(day);
-			j += 10;
-			utc = Integer.parseInt(line.substring(j, j + 10).trim());
-			//System.out.println(utc);
-			j += 10;
-			satelliteId = Integer.parseInt(line.substring(j, j + 10)
-					.trim());
-			//System.out.println(satelliteId);
-			j += 10;
-			polarSatellite = (Integer.parseInt(line
-					.substring(j, j + 10).trim()) > 0);
-			//System.out.println(polarSatellite);
-			j += 10;
-			channelCount = Integer.parseInt(line.substring(j, j + 10)
-					.trim());
-			//System.out.println(channelCount);
-			j += 10;
-			channelCount = Integer.parseInt(line.substring(j, j + 10)
-					.trim());
-			//System.out.println(channelCount);
-			
-			for (int i = 2; i < 384; i++) {
-				int offset = (i - 1) * 80;
-				line = new String(buffer, offset, 80,
-						Charset.forName("ascii"));
-				
-				System.out.println(line);
-			}
-
-			int recordCount = (int) (file.length() / RECLEN);
-			System.out.println("Record Count: " + recordCount);
-			
-			int width = 1440;
-			int height = 550;
-			BufferedImage image = null;
-			if (f.exists()) {
-				image = ImageIO.read(f);
-			} else {
-				image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-			}
-			recordCount--;
-			for (int recIdx=0; recIdx < recordCount; recIdx++) {
-				System.out.println("\nidx: " + 	recIdx);
-				
-				in.read(buffer,0,RECLEN);
-				
-				DataInputStream bIn = new DataInputStream(
-						new ByteArrayInputStream(buffer,0,RECLEN));
-				
-				// Prefix area
-								
-				int iwest = bIn.readInt();
-				System.out.println("iwest: " +iwest);
-
-				int ieast = bIn.readInt();
-				System.out.println("ieast: " +ieast);
-				System.out.println("ieast-iwest: " + (ieast-iwest));
-				
-				int inorth = bIn.readInt();
-				System.out.println("inorth: " + inorth);
-				
-				int isouth = bIn.readInt();
-				System.out.println("isouth: " + isouth);
-				System.out.println("inorth-isouth: " + (inorth-isouth));
-				
-				int npix = bIn.readInt();
-				System.out.println("npix: " +npix);
-
-				int iout = bIn.readInt();
-				System.out.println("iout: " +iout);
-
-				//npix = npix/2;
-
-				int[] longitudes = new int[npix];
-				int[] latitudes = new int[npix];
-				int[] xPositions = new int[npix];
-				int[] yPositions = new int[npix];
-				
-//				for (int i=0; i<npix; i++ ) {
-//					longitudes[i] = bIn.readShort();
-//				}
-//				
-//				for (int i=0; i<npix; i++ ) {
-//					latitudes[i] = bIn.readShort();
-//				}
-//				
-//				for (int i=0; i<npix; i++ ) {
-//					xPositions[i] = bIn.readShort();
-//				}
-//				
-//				for (int i=0; i<npix; i++ ) {
-//					yPositions[i] = bIn.readShort();
-//				}
-		
-				DxDataRec[] dataRec = new DxDataRec[npix];
-				for (int i=0; i<npix; i++ ) {
-					longitudes[i] = bIn.readShort();
-					latitudes[i] = bIn.readShort();
-					xPositions[i] = bIn.readShort();
-					yPositions[i] = bIn.readShort();
-
-//					System.out.println("pos: " + xPositions[i] + "," + yPositions[i]);
-					dataRec[i] = new DxDataRec(longitudes[i], latitudes[i], xPositions[i], yPositions[i]);
-				}
-				System.out.println("npix: " + npix);
-		
-				//bIn.read(buffer, 0, iout);
-				
-//				DataInputStream bIn = new DataInputStream(
-//						new ByteArrayInputStream(buffer,0,iout));
-				
-				System.out.println("iout: " + iout);
-				System.out.println("avilable: " + bIn.available());
-				
-				//npix = npix * 2;
-				for (int i = 0; i < npix; i++) {									
-					DxS1 dxs1 = null;
-	
-					// S1
-					bIn.read(buffer, 0, DxS1.DATA_LEN);
-					dxs1 = new DxS1(buffer, 0);
-					//System.out.println("IRRadiance: " + dxs1.getIRRadiance());
-					//System.out.println("FirstIRClearSkyRadiance: " + dxs1.getFirstIRClearSkyRadiance());
-					
-					int radiance = dxs1.getIRRadiance();
-					int r = radiance;
-		            int g = radiance;
-		            int b = radiance;
-		            int col = (r << 16) | (g << 8) | b;
-		            
-		            //System.out.println(i + " ... " + dataRec[i].xBuf + "," + dataRec[i].yBuf);
-		            if (col != 0) {
-		            	image.setRGB(dataRec[i].xBuf, height - dataRec[i].yBuf, col);
-		            }
-					
-					// ADD1
-					bIn.read(buffer, 0, channelCount - 2);
-					new DxAdd1(buffer, 0, channelCount - 2);
-	
-					if (!polarSatellite) {
-						if (!dxs1.isNoDay()) {
-							// S3
-							bIn.read(buffer, 0, DxS3.DATA_LEN);
-							new DxS3(buffer, 0);
-						} else {
-							// S2
-							bIn.read(buffer, 0, DxS2.DATA_LEN);
-							new DxS2(buffer, 0);
-							// S3
-							bIn.read(buffer, 0, DxS4.DATA_LEN);
-							new DxS3(buffer, 0);
-							// S4
-							bIn.read(buffer, 0, DxS4.DATA_LEN);
-							new DxS4(buffer, 0);
-						}
-					} else {
-						if (!dxs1.isNoDay()) {
-							// S3
-							bIn.read(buffer, 0, DxS3.DATA_LEN);
-							new DxS3(buffer, 0);
-							// Add3
-							bIn.read(buffer, 0, DxAdd3.DATA_LEN);
-							new DxAdd3(buffer, 0);
-						} else {
-							// S2
-							bIn.read(buffer, 0, DxS2.DATA_LEN);
-							new DxS2(buffer, 0);
-							// S3
-							bIn.read(buffer, 0, DxS3.DATA_LEN);
-							new DxS3(buffer, 0);
-							// Add3
-							bIn.read(buffer, 0, DxAdd3.DATA_LEN);
-							new DxAdd3(buffer, 0);
-							// S4
-							bIn.read(buffer, 0, DxS4.DATA_LEN);
-							new DxS4(buffer, 0);
-						}
-					}
-				}
-			}
-			
-
-			
-			ImageIO.write(image, "PNG", f);
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		} finally {
-			if (in != null) {
-				in.close();
-			}
-		}
-
-	}
 }
